@@ -410,7 +410,7 @@
     if ('speechSynthesis' in window) {
       try {
         const u = new SpeechSynthesisUtterance(text);
-        u.lang = 'en-US';
+        u.lang = 'de-DE';
         window.speechSynthesis.speak(u);
       } catch (e) {
         console.warn('SpeechSynthesis Fehler:', e);
@@ -535,20 +535,19 @@
 
     if (grade3) {
       if (!tens) {
-        // 3. Klasse, normales 1×1: beide 2–10, aber kein Faktor 1 und nicht 10×10
+        // 3. Klasse, normales 1×1: beide 2–10, kein Faktor 1, nicht 10×10
         do {
           a = randInt(2, 10);
           b = randInt(2, 10);
         } while (a === 10 && b === 10);
       } else {
-        // 3. Klasse, 10er: 2–9 × 10 (kein 1, kein 10×10)
+        // 3. Klasse, 10er: 2–9 × 10
         a = randInt(2, 9);
         b = 10;
       }
     } else {
       if (!tens) {
-        // 4. Klasse, erweitertes 1×1 bis 20, höchstens ein zweistelliger Faktor
-        // genau EIN Faktor 10–20, anderer 2–9
+        // 4. Klasse, erweitertes 1×1 bis 20, genau ein zweistelliger Faktor
         if (Math.random() < 0.5) {
           a = randInt(10, 20);
           b = randInt(2, 9);
@@ -557,13 +556,11 @@
           b = randInt(10, 20);
         }
       } else {
-        // 4. Klasse, 10er: Beispiele wie 2–9 × 10 oder 4 × 30 (immer höchstens 1 zweistellig)
+        // 4. Klasse, 10er-Einmaleins
         if (Math.random() < 0.5) {
-          // 2–9 × 10
           a = randInt(2, 9);
           b = 10;
         } else {
-          // 2–9 × (10,20,...,90) -> einer einstellig, einer zweistellig
           a = randInt(2, 9);
           b = randInt(1, 9) * 10;
         }
@@ -577,7 +574,6 @@
     const base = generateMultiplicationPair();
 
     if (multFirst) {
-      // Multiplikation
       currentOp = '×';
       return { a: base.a, b: base.b, result: base.result, op: '×' };
     } else {
@@ -585,14 +581,11 @@
       const c = base.result;
       const chooseFirst = Math.random() < 0.5;
       let a, b, result;
-
       if (chooseFirst) {
-        // c ÷ base.a = base.b
         a = c;
         b = base.a;
         result = base.b;
       } else {
-        // c ÷ base.b = base.a
         a = c;
         b = base.b;
         result = base.a;
@@ -704,34 +697,35 @@
     if (!isTimeout && correct) {
       feedbackEl.textContent = 'Richtig! 👍';
       feedbackEl.className = 'feedback ok';
-      speak('Richtig!');
       position = Math.min(position + 1, STEP_WIN);
     } else {
       feedbackEl.textContent = isTimeout
         ? 'Zeit abgelaufen – ein Schritt für den PC.'
         : 'Leider falsch – ein Schritt für den PC.';
       feedbackEl.className = 'feedback error';
-      speak('Leider falsch!');
       position = Math.max(position - 1, -STEP_WIN);
     }
 
+    // Punkt für Spieler oder Roboter?
     if (position >= STEP_WIN) {
       playerPoints++;
       position = 0;
       feedbackEl.textContent += ' Du gewinnst eine Runde!';
       feedbackEl.className = 'feedback ok';
+      speak('Punkt für dich!');
     } else if (position <= -STEP_WIN) {
       pcPoints++;
       position = 0;
-      feedbackEl.textContent += ' Der PC gewinnt eine Runde.';
+      feedbackEl.textContent += ' Der Roboter gewinnt eine Runde.';
       feedbackEl.className = 'feedback error';
+      speak('Punkt für den Roboter!');
     }
 
     updateTrack();
     updateStats();
 
     if (playerPoints >= POINTS_TO_WIN || pcPoints >= POINTS_TO_WIN) {
-      endGame();
+      setTimeout(endGame, 600);
     } else {
       setTimeout(() => {
         nextQuestion();
@@ -747,7 +741,14 @@
     resultScreen.classList.remove('hidden');
 
     const win = playerPoints > pcPoints;
-    resultTitle.textContent = win ? 'Sieg! 🎉' : 'Niederlage 😕';
+    if (win) {
+      resultTitle.textContent = 'Sieg! 🎉';
+      speak('Du gewinnst eine Runde!');
+    } else {
+      resultTitle.textContent = 'Niederlage 😕';
+      speak('Der Roboter gewinnt eine Runde!');
+    }
+
     resultSummary.innerHTML =
       `Du hast insgesamt <strong>${questionsCount}</strong> Aufgaben gelöst.<br>` +
       `Punkte: <strong>Du ${playerPoints}</strong> – <strong>PC ${pcPoints}</strong>.`;
