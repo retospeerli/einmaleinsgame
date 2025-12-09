@@ -337,6 +337,11 @@
   </div>
 </div>
 
+<!-- Audio-Effekte: Pfade bei Bedarf anpassen -->
+<audio id="sound-coin" src="coin.mp3" preload="auto"></audio>
+<audio id="sound-error" src="error.mp3" preload="auto"></audio>
+<audio id="sound-fanfare" src="fanfare.mp3" preload="auto"></audio>
+
 <script>
   // --- Konfiguration ---
   const STEP_WIN = 4;      // 4 Schritte nach links/rechts = Punkt
@@ -401,9 +406,16 @@
   const finishBtn = document.getElementById('finish-btn');
   const againBtn = document.getElementById('again-btn');
 
-  // --- Hilfsfunktionen ---
-  function randInt(min, max) {
-    return Math.floor(Math.random() * (max - min + 1)) + min;
+  // --- Audio-Helfer ---
+  function playSound(id) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    try {
+      el.currentTime = 0;
+      el.play().catch(() => {});
+    } catch (e) {
+      console.warn('Audio-Fehler:', e);
+    }
   }
 
   function speak(text) {
@@ -528,6 +540,10 @@
   }
 
   // --- Aufgaben-Generator ---
+  function randInt(min, max) {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+  }
+
   function generateMultiplicationPair() {
     let a, b;
     const grade3 = selectedGrade === '3';
@@ -697,12 +713,16 @@
     if (!isTimeout && correct) {
       feedbackEl.textContent = 'Richtig! 👍';
       feedbackEl.className = 'feedback ok';
+      // Coin-Sound bei richtiger Antwort
+      playSound('sound-coin');
       position = Math.min(position + 1, STEP_WIN);
     } else {
       feedbackEl.textContent = isTimeout
         ? 'Zeit abgelaufen – ein Schritt für den PC.'
         : 'Leider falsch – ein Schritt für den PC.';
       feedbackEl.className = 'feedback error';
+      // Error-Sound bei falscher Antwort oder Timeout
+      playSound('sound-error');
       position = Math.max(position - 1, -STEP_WIN);
     }
 
@@ -712,12 +732,14 @@
       position = 0;
       feedbackEl.textContent += ' Du gewinnst eine Runde!';
       feedbackEl.className = 'feedback ok';
+      // Speech bei Punktegewinn
       speak('Punkt für dich!');
     } else if (position <= -STEP_WIN) {
       pcPoints++;
       position = 0;
       feedbackEl.textContent += ' Der Roboter gewinnt eine Runde.';
       feedbackEl.className = 'feedback error';
+      // Speech bei Punktegewinn des Roboters
       speak('Punkt für den Roboter!');
     }
 
@@ -743,10 +765,14 @@
     const win = playerPoints > pcPoints;
     if (win) {
       resultTitle.textContent = 'Sieg! 🎉';
-      speak('Du gewinnst eine Runde!');
+      // Fanfare + danach Sieg-Speech
+      playSound('sound-fanfare');
+      setTimeout(() => {
+        speak('Du gewinnst den Mathe-Kampf!');
+      }, 800);
     } else {
       resultTitle.textContent = 'Niederlage 😕';
-      speak('Der Roboter gewinnt eine Runde!');
+      speak('Der Roboter gewinnt den Mathe-Kampf!');
     }
 
     resultSummary.innerHTML =
@@ -783,3 +809,4 @@
 </script>
 </body>
 </html>
+
