@@ -261,14 +261,17 @@
 
     <div class="section-title">Schwierigkeit / Zeit pro Aufgabe</div>
     <div class="choice-grid" id="difficulty-grid">
-      <button type="button" class="choice-btn diff-btn" data-diff="easy">
-        einfach (45&nbsp;s)
-      </button>
-      <button type="button" class="choice-btn diff-btn" data-diff="medium">
-        mittel (30&nbsp;s)
+      <button type="button" class="choice-btn diff-btn" data-diff="extreme">
+        extrem (3&nbsp;s)
       </button>
       <button type="button" class="choice-btn diff-btn" data-diff="hard">
-        schwierig (15&nbsp;s)
+        schwierig (5&nbsp;s)
+      </button>
+      <button type="button" class="choice-btn diff-btn" data-diff="medium">
+        mittel (10&nbsp;s)
+      </button>
+      <button type="button" class="choice-btn diff-btn" data-diff="easy">
+        einfach (20&nbsp;s)
       </button>
     </div>
 
@@ -340,18 +343,19 @@
   const POINTS_TO_WIN = 3; // 3 Punkte = Spielende
 
   const TIME_LIMITS = {
-    easy: 45,
-    medium: 30,
-    hard: 15
+    extreme: 3,
+    hard: 5,
+    medium: 10,
+    easy: 20
   };
 
   // --- Zustand ---
   let selectedGrade = null;      // '3' oder '4'
   let selectedMode = null;       // 'normal' | 'tens'
-  let selectedDifficulty = null; // 'easy' | 'medium' | 'hard'
+  let selectedDifficulty = null; // 'extreme' | 'hard' | 'medium' | 'easy'
 
-  let timeLimit = 30;
-  let timeLeft = 30;
+  let timeLimit = 10;
+  let timeLeft = 10;
   let timerId = null;
 
   let currentA = 0;
@@ -479,10 +483,11 @@
           ? '10er-Einmaleins (2–9 × 10)'
           : '10er-Einmaleins (2–9 × 10, 10,20,…,90)');
 
-    const diffText =
-      selectedDifficulty === 'easy' ? 'einfach (45 s)'
-      : selectedDifficulty === 'medium' ? 'mittel (30 s)'
-      : 'schwierig (15 s)';
+    let diffText = '';
+    if (selectedDifficulty === 'extreme') diffText = 'extrem (3 s)';
+    else if (selectedDifficulty === 'hard') diffText = 'schwierig (5 s)';
+    else if (selectedDifficulty === 'medium') diffText = 'mittel (10 s)';
+    else diffText = 'einfach (20 s)';
 
     selectedInfo.textContent = `${gradeText}, ${modeText}, ${diffText}`;
     startBtn.disabled = false;
@@ -491,7 +496,7 @@
   startBtn.addEventListener('click', startGame);
 
   function startGame() {
-    timeLimit = TIME_LIMITS[selectedDifficulty] || 30;
+    timeLimit = TIME_LIMITS[selectedDifficulty] || 10;
     position = 0;
     playerPoints = 0;
     pcPoints = 0;
@@ -634,7 +639,7 @@
 
   function updateTimerUI() {
     timerDisplay.textContent = `Restzeit: ${timeLeft}s`;
-    timerDisplay.classList.toggle('low', timeLeft <= 5);
+    timerDisplay.classList.toggle('low', timeLeft <= 2);
   }
 
   // --- Arena / Marker ---
@@ -699,14 +704,14 @@
     if (!isTimeout && correct) {
       feedbackEl.textContent = 'Richtig! 👍';
       feedbackEl.className = 'feedback ok';
-      speak('Yeah!');
+      speak('Richtig!');
       position = Math.min(position + 1, STEP_WIN);
     } else {
       feedbackEl.textContent = isTimeout
         ? 'Zeit abgelaufen – ein Schritt für den PC.'
         : 'Leider falsch – ein Schritt für den PC.';
       feedbackEl.className = 'feedback error';
-      speak('Ouch!');
+      speak('Leider falsch!');
       position = Math.max(position - 1, -STEP_WIN);
     }
 
