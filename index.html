@@ -2,7 +2,7 @@
 <html lang="de">
 <head>
   <meta charset="UTF-8">
-  <title>Einmaleins-Training – Gamification</title>
+  <title>Einmaleins-Training – Ringkampf</title>
   <style>
     :root {
       font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
@@ -20,7 +20,7 @@
       border-radius: 18px;
       box-shadow: 0 10px 30px rgba(0,0,0,0.12);
       padding: 2rem 2.5rem;
-      max-width: 700px;
+      max-width: 720px;
       width: 100%;
       box-sizing: border-box;
     }
@@ -103,6 +103,7 @@
       cursor: not-allowed;
       box-shadow: none;
     }
+
     .secondary-btn {
       margin-top: 0.4rem;
       width: 100%;
@@ -128,10 +129,22 @@
     .hidden { display: none; }
 
     /* Quizbereich */
+    .info-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.9rem;
+      color: #4b5563;
+      margin-top: 0.3rem;
+    }
+    .timer {
+      font-weight: 700;
+    }
+    .timer.low { color: #b91c1c; }
+
     .equation {
       font-size: 1.6rem;
       font-weight: 600;
-      margin: 0.4rem 0 0.3rem;
+      margin: 0.7rem 0 0.5rem;
       text-align: center;
     }
     .equation input {
@@ -142,19 +155,6 @@
       border-radius: 8px;
       border: 2px solid #d1d5db;
     }
-
-    .info-row {
-      display: flex;
-      justify-content: space-between;
-      font-size: 0.9rem;
-      color: #4b5563;
-      margin-top: 0.3rem;
-    }
-
-    .timer {
-      font-weight: 700;
-    }
-    .timer.low { color: #b91c1c; }
 
     .feedback {
       min-height: 1.4rem;
@@ -171,7 +171,7 @@
       color: #374151;
     }
 
-    /* Arena */
+    /* Arena / Ringkampf */
     .arena-wrapper {
       margin-top: 1rem;
       padding: 0.8rem;
@@ -195,12 +195,12 @@
       gap: 0.6rem;
     }
     .fighter {
-      font-size: 2rem;
+      font-size: 2.1rem;
     }
     .track {
       display: grid;
       grid-template-columns: repeat(9, minmax(0, 1fr));
-      gap: 0.1rem;
+      gap: 0.12rem;
       align-items: center;
     }
     .track-cell {
@@ -224,7 +224,6 @@
       box-shadow: 0 0 0 2px rgba(0,0,0,0.08);
     }
 
-    /* Ergebnis-Screen */
     #result-screen h2 {
       margin-bottom: 0.3rem;
     }
@@ -239,10 +238,10 @@
   <h1>Einmaleins – Trainingskampf</h1>
   <div class="subtitle">
     Wähle Klasse, Aufgabentyp und Schwierigkeit.<br>
-    Löse die Einmaleins-Aufgaben gegen den „PC-Ringer“.
+    Löse Multiplikations- und Divisionsaufgaben gegen den „PC-Ringer“.
   </div>
 
-  <!-- Startscreen -->
+  <!-- STARTSCREEN -->
   <div id="start-screen">
     <div class="section-title">Klasse</div>
     <div class="choice-grid" id="grade-grid">
@@ -253,7 +252,7 @@
     <div class="section-title">Aufgabentyp</div>
     <div class="choice-grid" id="mode-grid">
       <button type="button" class="choice-btn mode-btn" data-mode="normal">
-        Normales Einmaleins
+        Normales / erweitertes Einmaleins
       </button>
       <button type="button" class="choice-btn mode-btn" data-mode="tens">
         10er-Einmaleins
@@ -277,7 +276,7 @@
     <button class="primary-btn" id="start-btn" disabled>Los geht's!</button>
   </div>
 
-  <!-- Quiz-Screen -->
+  <!-- QUIZSCREEN -->
   <div id="quiz-screen" class="hidden">
     <div class="info-row">
       <div id="mode-label"></div>
@@ -286,7 +285,7 @@
 
     <div class="equation">
       <span id="factor-a">3</span>
-      &nbsp;×&nbsp;
+      <span id="op">×</span>
       <span id="factor-b">4</span>
       &nbsp;=&nbsp;
       <input type="number" id="answer-input" autocomplete="off">
@@ -309,21 +308,20 @@
       <div class="arena-header">
         <div class="score" id="score-text">0 : 0</div>
         <div style="font-size:0.85rem;color:#6b7280;">
-          4 Schritte nach rechts = Punkt für dich<br>
-          4 Schritte nach links = Punkt für PC
+          Richtig: ein Schritt nach rechts<br>
+          Falsch / Zeit abgelaufen: ein Schritt nach links<br>
+          4 Schritte = 1 Punkt
         </div>
       </div>
       <div class="arena">
         <div class="fighter">🤖</div>
-        <div class="track" id="track">
-          <!-- 9 Zellen, Mitte markiert -->
-        </div>
+        <div class="track" id="track"></div>
         <div class="fighter">🤼‍♂️</div>
       </div>
     </div>
   </div>
 
-  <!-- Ergebnis-Screen -->
+  <!-- RESULTSCREEN -->
   <div id="result-screen" class="hidden center">
     <h2 id="result-title">Fertig!</h2>
     <p id="result-summary"></p>
@@ -347,9 +345,9 @@
     hard: 15
   };
 
-  // --- State ---
+  // --- Zustand ---
   let selectedGrade = null;      // '3' oder '4'
-  let selectedMode = null;       // 'normal' oder 'tens'
+  let selectedMode = null;       // 'normal' | 'tens'
   let selectedDifficulty = null; // 'easy' | 'medium' | 'hard'
 
   let timeLimit = 30;
@@ -359,6 +357,7 @@
   let currentA = 0;
   let currentB = 0;
   let currentResult = 0;
+  let currentOp = '×'; // '×' oder '÷'
 
   let position = 0;      // -4..+4, 0 = Mitte
   let playerPoints = 0;
@@ -382,6 +381,7 @@
   const timerDisplay = document.getElementById('timer-display');
   const factorAEl = document.getElementById('factor-a');
   const factorBEl = document.getElementById('factor-b');
+  const opEl = document.getElementById('op');
   const answerInput = document.getElementById('answer-input');
   const answerBtn = document.getElementById('answer-btn');
   const feedbackEl = document.getElementById('feedback');
@@ -397,12 +397,28 @@
   const finishBtn = document.getElementById('finish-btn');
   const againBtn = document.getElementById('again-btn');
 
-  // --- Auswahl-Buttons ---
+  // --- Hilfsfunktionen ---
+  function randInt(min, max) {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+  }
+
+  function speak(text) {
+    if ('speechSynthesis' in window) {
+      try {
+        const u = new SpeechSynthesisUtterance(text);
+        u.lang = 'en-US';
+        window.speechSynthesis.speak(u);
+      } catch (e) {
+        console.warn('SpeechSynthesis Fehler:', e);
+      }
+    }
+  }
+
+  // --- Auswahl-Logik ---
   gradeGrid.querySelectorAll('.grade-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       const g = btn.dataset.grade;
       selectedGrade = (selectedGrade === g) ? null : g;
-
       gradeGrid.querySelectorAll('.grade-btn').forEach(b => {
         b.classList.toggle('selected', b.dataset.grade === selectedGrade);
       });
@@ -414,7 +430,6 @@
     btn.addEventListener('click', () => {
       const m = btn.dataset.mode;
       selectedMode = (selectedMode === m) ? null : m;
-
       modeGrid.querySelectorAll('.mode-btn').forEach(b => {
         b.classList.toggle('selected', b.dataset.mode === selectedMode);
       });
@@ -426,7 +441,6 @@
     btn.addEventListener('click', () => {
       const d = btn.dataset.diff;
       selectedDifficulty = (selectedDifficulty === d) ? null : d;
-
       diffGrid.querySelectorAll('.diff-btn').forEach(b => {
         b.classList.toggle('selected', b.dataset.diff === selectedDifficulty);
       });
@@ -455,14 +469,15 @@
       startBtn.disabled = true;
       return;
     }
+
     const gradeText = selectedGrade === '3' ? '3. Klasse' : '4. Klasse';
     const modeText = selectedMode === 'normal'
       ? (selectedGrade === '3'
           ? 'Normales Einmaleins bis 10'
-          : 'Erweitertes Einmaleins bis 20')
+          : 'Erweitertes Einmaleins bis 20 (nur ein zweistelliger Faktor)')
       : (selectedGrade === '3'
-          ? '10er-Einmaleins bis 10 · 10'
-          : '10er-Einmaleins bis 99 · 10');
+          ? '10er-Einmaleins (2–9 × 10)'
+          : '10er-Einmaleins (2–9 × 10, 10,20,…,90)');
 
     const diffText =
       selectedDifficulty === 'easy' ? 'einfach (45 s)'
@@ -473,10 +488,7 @@
     startBtn.disabled = false;
   }
 
-  // --- Spielstart ---
-  startBtn.addEventListener('click', () => {
-    startGame();
-  });
+  startBtn.addEventListener('click', startGame);
 
   function startGame() {
     timeLimit = TIME_LIMITS[selectedDifficulty] || 30;
@@ -486,8 +498,10 @@
     questionsCount = 0;
     gameOver = false;
 
+    buildTrack();
     updateTrack();
     updateStats();
+
     feedbackEl.textContent = '';
     feedbackEl.className = 'feedback';
 
@@ -496,8 +510,9 @@
           ? 'Normales 1×1 bis 10'
           : 'Erweitertes 1×1 bis 20')
       : (selectedGrade === '3'
-          ? '10er-1×1 bis 10 · 10'
-          : '10er-1×1 bis 99 · 10');
+          ? '10er-1×1 (2–9 × 10)'
+          : '10er-1×1 (z.B. 2–9 × 10, 4 × 30)');
+
     modeLabel.textContent = modeText;
 
     startScreen.classList.add('hidden');
@@ -508,37 +523,92 @@
   }
 
   // --- Aufgaben-Generator ---
-  function generateTask() {
+  function generateMultiplicationPair() {
     let a, b;
-    if (selectedGrade === '3') {
-      if (selectedMode === 'normal') {
-        a = randInt(1, 10);
-        b = randInt(1, 10);
-      } else { // tens
-        a = randInt(1, 10);
+    const grade3 = selectedGrade === '3';
+    const tens = selectedMode === 'tens';
+
+    if (grade3) {
+      if (!tens) {
+        // 3. Klasse, normales 1×1: beide 2–10, aber kein Faktor 1 und nicht 10×10
+        do {
+          a = randInt(2, 10);
+          b = randInt(2, 10);
+        } while (a === 10 && b === 10);
+      } else {
+        // 3. Klasse, 10er: 2–9 × 10 (kein 1, kein 10×10)
+        a = randInt(2, 9);
         b = 10;
       }
-    } else { // 4. Klasse
-      if (selectedMode === 'normal') {
-        a = randInt(1, 20);
-        b = randInt(1, 20);
-      } else { // tens erweitert
-        a = randInt(1, 99);
-        b = 10;
+    } else {
+      if (!tens) {
+        // 4. Klasse, erweitertes 1×1 bis 20, höchstens ein zweistelliger Faktor
+        // genau EIN Faktor 10–20, anderer 2–9
+        if (Math.random() < 0.5) {
+          a = randInt(10, 20);
+          b = randInt(2, 9);
+        } else {
+          a = randInt(2, 9);
+          b = randInt(10, 20);
+        }
+      } else {
+        // 4. Klasse, 10er: Beispiele wie 2–9 × 10 oder 4 × 30 (immer höchstens 1 zweistellig)
+        if (Math.random() < 0.5) {
+          // 2–9 × 10
+          a = randInt(2, 9);
+          b = 10;
+        } else {
+          // 2–9 × (10,20,...,90) -> einer einstellig, einer zweistellig
+          a = randInt(2, 9);
+          b = randInt(1, 9) * 10;
+        }
       }
     }
     return { a, b, result: a * b };
   }
 
+  function generateTask() {
+    const multFirst = Math.random() < 0.5; // Hälfte Multiplikation, Hälfte Division
+    const base = generateMultiplicationPair();
+
+    if (multFirst) {
+      // Multiplikation
+      currentOp = '×';
+      return { a: base.a, b: base.b, result: base.result, op: '×' };
+    } else {
+      // Division als Umkehraufgabe
+      const c = base.result;
+      const chooseFirst = Math.random() < 0.5;
+      let a, b, result;
+
+      if (chooseFirst) {
+        // c ÷ base.a = base.b
+        a = c;
+        b = base.a;
+        result = base.b;
+      } else {
+        // c ÷ base.b = base.a
+        a = c;
+        b = base.b;
+        result = base.a;
+      }
+      currentOp = '÷';
+      return { a, b, result, op: '÷' };
+    }
+  }
+
   function nextQuestion() {
     if (gameOver) return;
-    const task = generateTask();
-    currentA = task.a;
-    currentB = task.b;
-    currentResult = task.result;
+    const t = generateTask();
+    currentA = t.a;
+    currentB = t.b;
+    currentResult = t.result;
+    currentOp = t.op;
 
     factorAEl.textContent = currentA;
     factorBEl.textContent = currentB;
+    opEl.textContent = ` ${currentOp} `;
+
     answerInput.value = '';
     answerInput.focus();
 
@@ -556,6 +626,7 @@
       updateTimerUI();
       if (timeLeft <= 0) {
         clearInterval(timerId);
+        timerId = null;
         handleAnswer(null, true); // Timeout = falsch
       }
     }, 1000);
@@ -600,16 +671,16 @@
 
   // --- Antwortbehandlung ---
   answerBtn.addEventListener('click', () => {
-    const value = answerInput.value.trim();
-    const num = value === '' ? null : Number(value);
+    const val = answerInput.value.trim();
+    const num = val === '' ? null : Number(val);
     handleAnswer(num, false);
   });
 
   answerInput.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') {
       e.preventDefault();
-      const value = answerInput.value.trim();
-      const num = value === '' ? null : Number(value);
+      const val = answerInput.value.trim();
+      const num = val === '' ? null : Number(val);
       handleAnswer(num, false);
     }
   });
@@ -628,14 +699,17 @@
     if (!isTimeout && correct) {
       feedbackEl.textContent = 'Richtig! 👍';
       feedbackEl.className = 'feedback ok';
+      speak('Yeah!');
       position = Math.min(position + 1, STEP_WIN);
     } else {
-      feedbackEl.textContent = isTimeout ? 'Zeit abgelaufen – ein Schritt für den PC.' : 'Leider falsch – ein Schritt für den PC.';
+      feedbackEl.textContent = isTimeout
+        ? 'Zeit abgelaufen – ein Schritt für den PC.'
+        : 'Leider falsch – ein Schritt für den PC.';
       feedbackEl.className = 'feedback error';
+      speak('Ouch!');
       position = Math.max(position - 1, -STEP_WIN);
     }
 
-    // Punktvergabe?
     if (position >= STEP_WIN) {
       playerPoints++;
       position = 0;
@@ -651,7 +725,6 @@
     updateTrack();
     updateStats();
 
-    // Spielende?
     if (playerPoints >= POINTS_TO_WIN || pcPoints >= POINTS_TO_WIN) {
       endGame();
     } else {
@@ -673,16 +746,14 @@
     resultSummary.innerHTML =
       `Du hast insgesamt <strong>${questionsCount}</strong> Aufgaben gelöst.<br>` +
       `Punkte: <strong>Du ${playerPoints}</strong> – <strong>PC ${pcPoints}</strong>.`;
-
     finishBtn.disabled = false;
     finishBtn.textContent = 'Fertig';
   }
 
-  // LearningView: Rückmeldung
+  // LearningView-Feedback
   finishBtn.addEventListener('click', () => {
     finishBtn.disabled = true;
     finishBtn.textContent = 'Erledigt ✔';
-
     try {
       if (window.parent && window.parent !== window) {
         window.parent.postMessage('AppSolved', '*');
@@ -696,11 +767,6 @@
     resultScreen.classList.add('hidden');
     startScreen.classList.remove('hidden');
   });
-
-  // --- Hilfsfunktionen ---
-  function randInt(min, max) {
-    return Math.floor(Math.random() * (max - min + 1)) + min;
-  }
 
   // --- Init ---
   (function init() {
