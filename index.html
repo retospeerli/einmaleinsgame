@@ -374,6 +374,7 @@
   let questionsCount = 0;
 
   let gameOver = false;
+  let isAnswerLocked = false; // NEU: sperrt Mehrfachklicks pro Aufgabe
 
   // --- DOM ---
   const startScreen = document.getElementById('start-screen');
@@ -514,6 +515,7 @@
     pcPoints = 0;
     questionsCount = 0;
     gameOver = false;
+    isAnswerLocked = false;
 
     buildTrack();
     updateTrack();
@@ -626,6 +628,9 @@
     answerInput.value = '';
     answerInput.focus();
 
+    isAnswerLocked = false;          // NEU: Frage wieder freigeben
+    answerBtn.disabled = false;      // Button aktivieren
+
     resetTimer();
   }
 
@@ -701,6 +706,9 @@
 
   function handleAnswer(value, isTimeout) {
     if (gameOver) return;
+    if (isAnswerLocked) return;      // NEU: Mehrfachklicks ignorieren
+    isAnswerLocked = true;           // NEU: ab jetzt gesperrt
+    answerBtn.disabled = true;       // NEU: Button deaktivieren
 
     if (timerId) {
       clearInterval(timerId);
@@ -809,4 +817,3 @@
 </script>
 </body>
 </html>
-
